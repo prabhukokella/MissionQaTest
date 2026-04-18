@@ -1,0 +1,17 @@
+# Maven
+target/
+
+# Test reports
+test-output/
+
+# Eclipse
+.classpath
+.project
+.settings/
+
+# IntelliJ
+.idea/
+*.iml
+
+# Logs
+*.log
