@@ -1,90 +1,104 @@
 package services;
 
-import java.util.List;
+import ui.pages.CheckoutPage;
+import ui.pages.HomePage;
+import ui.pages.CartPage;
+import ui.pages.LoginPage;
 
 import org.openqa.selenium.WebDriver;
 
-import ui.pages.CartPage;
-import ui.pages.CheckoutPage;
-import ui.pages.LoginPage;
-import ui.pages.ProductsPage;
+import java.util.List;
 
 public class CheckoutService {
 
-	LoginPage login;
-	ProductsPage products;
-	CartPage cart;
-	CheckoutPage checkout;
+    private WebDriver driver;
 
-	public CheckoutService(WebDriver driver) {
-		login = new LoginPage(driver);
-		products = new ProductsPage(driver);
-	}
+    private HomePage homePage;
+    private LoginPage loginPage;
+    private CartPage cartPage;
+    private CheckoutPage checkoutPage;
 
-	public void openHome() {
-		login.open();
-	}
+    public CheckoutService(WebDriver driver) {
+        this.driver = driver;
 
-	public void login(String user, String pass) {
-		products = login.login(user, pass);
-	}
+        this.homePage = new HomePage(driver);
+        this.loginPage = new LoginPage(driver);
+        this.cartPage = new CartPage(driver);
+        this.checkoutPage = new CheckoutPage(driver);
+    }
 
-	public void addItems(List<String> items) {
-		for (String item : items) {
-			products.addItem(item);
-		}
-	}
+    // ---------- FLOW METHODS ----------
 
-	public int getCartCount() {
-		return products.getCartCount();
-	}
+    public void openHome() {
+        homePage.open();
+    }
 
-	public void openCart() {
-		cart = products.openCart();
-	}
+    public void login(String username, String password) {
+        loginPage.login(username, password);
+    }
 
-	public boolean verifyQty() {
-		return cart.verifyQtyAllOne();
-	}
+    public void addItems(List<String> items) {
+        homePage.addItems(items);
+    }
 
-	public void removeItem(String item) {
-		cart.removeItem(item);
-	}
+    public int getCartCount() {
+        return homePage.getCartCount();
+    }
 
-	 public int getCartItems() { return cart.getItemCount(); }
+    public void openCart() {
+        homePage.openCart();
+    }
 
+    public boolean verifyQty() {
+        return cartPage.verifyQtyIsOne();
+    }
 
-	public void clickCheckout() {
-		checkout = cart.clickCheckout();
-	}
+    public void removeItem(String item) {
+        cartPage.removeItem(item);
+    }
 
-	public void typeFirst(String val) {
-		checkout.typeFirstName(val);
-	}
+    public void clickCheckout() {
+        cartPage.clickCheckout();
+    }
 
-	public void typeLast(String val) {
-		checkout.typeLastName(val);
-	}
+    // ---------- CHECKOUT ----------
 
-	public void typeZip(String val) {
-		checkout.typeZip(val);
-	}
+    public void typeFirst(String value) {
+        checkoutPage.typeFirstName(value);
+    }
 
-	public void continueCheckout() {
-		checkout.clickContinue();
-	}
+    public void typeLast(String value) {
+        checkoutPage.typeLastName(value);
+    }
 
-	public double getCalcTotal() {
-		return checkout.calculateItemTotal();
-	}
+    public void typeZip(String value) {
+        checkoutPage.typeZip(value);
+    }
 
-	public double getActualTotal() {
-		return checkout.getDisplayedTotal();
-	}
+    public void continueCheckout() {
+        checkoutPage.clickContinue();
+    }
 
-	public double getTax() {
-		return checkout.getTax();
-	}
-	
-	
+    // ---------- BUSINESS LOGIC ----------
+
+    public double getCalcTotal() {
+
+        List<Double> prices = checkoutPage.getItemPrices();
+
+        return prices.stream()
+                .mapToDouble(Double::doubleValue)
+                .sum();
+    }
+
+    public double getActualTotal() {
+        return checkoutPage.getDisplayedTotal();
+    }
+
+    public double getTax() {
+        return checkoutPage.getDisplayedTax();
+    }
+
+    public double calculateExpectedTax(double total, int percent) {
+        return total * percent / 100.0;
+    }
 }

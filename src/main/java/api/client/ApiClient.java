@@ -1,33 +1,58 @@
 package api.client;
 
+import core.interfaces.APIExecutor;
+import core.config.ConfigLoader;
+
+import io.restassured.RestAssured;
 import io.restassured.response.Response;
+import io.restassured.specification.RequestSpecification;
 
-import static io.restassured.RestAssured.*;
+public class ApiClient implements APIExecutor {
 
-public class ApiClient {
+    private final String baseUrl;
+    private final String apiKey;
 
-    private static final String API_KEY = "pub_18bf8784cba02010bc1386e2ec5d6d0a17fb450225633eff21c6610864594b1d"; // 🔥 replace with real key if needed
-
-    public static Response get(String url) {
-        return given()
-                .header("Content-Type", "application/json")
-                .header("x-api-key", API_KEY)   // ✅ FIX HERE
-                .when()
-                .get(url)
-                .then()
-                .extract()
-                .response();
+    public ApiClient() {
+        this.baseUrl = ConfigLoader.get("api.base.url");
+        this.apiKey = ConfigLoader.get("api.key");   // ✅ NEW
     }
 
-    public static Response post(String url, Object body) {
-        return given()
+    // ✅ Centralized request builder
+    private RequestSpecification request() {
+        return RestAssured
+                .given()
+                .baseUri(baseUrl)
                 .header("Content-Type", "application/json")
-                .header("x-api-key", API_KEY)   // ✅ FIX HERE
+                .header("x-api-key", apiKey);   // 🔥 CRITICAL FIX
+    }
+
+    @Override
+    public Response get(String endpoint) {
+        return request()
+                .when()
+                .get(endpoint);
+    }
+
+    @Override
+    public Response post(String endpoint, Object body) {
+        return request()
                 .body(body)
                 .when()
-                .post(url)
-                .then()
-                .extract()
-                .response();
+                .post(endpoint);
+    }
+
+    @Override
+    public Response put(String endpoint, Object body) {
+        return request()
+                .body(body)
+                .when()
+                .put(endpoint);
+    }
+
+    @Override
+    public Response delete(String endpoint) {
+        return request()
+                .when()
+                .delete(endpoint);
     }
 }

@@ -1,62 +1,115 @@
 package core.driver;
 
-import java.time.Duration;
-import java.util.HashMap;
-import java.util.Map;
+import core.config.ConfigLoader;
+import core.interfaces.DriverProvider;
+import io.github.bonigarcia.wdm.WebDriverManager;
 
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 
-import io.github.bonigarcia.wdm.WebDriverManager;
+import org.openqa.selenium.edge.EdgeDriver;
+import org.openqa.selenium.edge.EdgeOptions;
 
-public class DriverFactory {
+import org.openqa.selenium.firefox.FirefoxDriver;
+import org.openqa.selenium.firefox.FirefoxOptions;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.Duration;
+import java.util.HashMap;
+import java.util.Map;
+
+public class DriverFactory implements DriverProvider {
 
     private static ThreadLocal<WebDriver> driver = new ThreadLocal<>();
 
-    // ---------- INIT DRIVER ----------
-    public static void init() {
+    @Override
+    public void init() {
 
-        if (driver.get() == null) {
+        if (driver.get() != null) return;
 
-            WebDriverManager.chromedriver().setup();
+        String browser = ConfigLoader.get("browser");
 
-            ChromeOptions options = new ChromeOptions();
+        try {
+            WebDriver webDriver;
 
-            // ---------- CRITICAL FIX ----------
-            options.addArguments("--incognito"); // 🔥 no stored passwords
-            options.addArguments("--disable-notifications");
-            options.addArguments("--disable-infobars");
-            options.addArguments("--disable-extensions");
-            options.addArguments("--start-maximized");
+            switch (browser.toLowerCase()) {
 
-            // Disable password manager + leak detection
-            Map<String, Object> prefs = new HashMap<>();
+                case "firefox":
+                    webDriver = initFirefox();
+                    break;
 
-            prefs.put("credentials_enable_service", false);
-            prefs.put("profile.password_manager_enabled", false);
-            prefs.put("profile.password_manager_leak_detection", false); // 🔥 IMPORTANT
+                case "edge":
+                    webDriver = initEdge();
+                    break;
 
-            options.setExperimentalOption("prefs", prefs);
-
-            // 🔥 Use fresh profile (MOST IMPORTANT)
-            options.addArguments("--user-data-dir=/tmp/chrome-test-profile");
-
-            WebDriver webDriver = new ChromeDriver(options);
+                case "chrome":
+                default:
+                    webDriver = initChrome();
+                    break;
+            }
 
             webDriver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
-
             driver.set(webDriver);
+
+        } catch (Exception e) {
+            throw new RuntimeException("Driver initialization failed", e);
         }
     }
 
-    // ---------- GET DRIVER ----------
-    public static WebDriver get() {
+    private WebDriver initChrome() throws Exception {
+
+        WebDriverManager.chromedriver().setup();
+
+        ChromeOptions options = new ChromeOptions();
+
+        options.addArguments("--incognito");
+        options.addArguments("--disable-notifications");
+        options.addArguments("--start-maximized");
+
+        Map<String, Object> prefs = new HashMap<>();
+        prefs.put("credentials_enable_service", false);
+        prefs.put("profile.password_manager_enabled", false);
+
+        options.setExperimentalOption("prefs", prefs);
+
+        Path profile = Files.createTempDirectory("chrome-profile-");
+        options.addArguments("--user-data-dir=" + profile.toAbsolutePath());
+
+        return new ChromeDriver(options);
+    }
+
+    private WebDriver initFirefox() {
+
+        WebDriverManager.firefoxdriver().setup();
+
+        FirefoxOptions options = new FirefoxOptions();
+        options.addArguments("-private");
+
+        return new FirefoxDriver(options);
+    }
+
+    private WebDriver initEdge() throws Exception {
+
+        WebDriverManager.edgedriver().setup();
+
+        EdgeOptions options = new EdgeOptions();
+        options.addArguments("--start-maximized");
+
+        Path profile = Files.createTempDirectory("edge-profile-");
+        options.addArguments("--user-data-dir=" + profile.toAbsolutePath());
+
+        return new EdgeDriver(options);
+    }
+
+    @Override
+    public WebDriver get() {
         return driver.get();
     }
 
-    // ---------- QUIT DRIVER ----------
-    public static void quit() {
+    @Override
+    public void quit() {
 
         if (driver.get() != null) {
             driver.get().quit();

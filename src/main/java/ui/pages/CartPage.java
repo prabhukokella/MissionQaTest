@@ -1,7 +1,10 @@
 package ui.pages;
 
+import java.util.List;
+
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
 
 import ui.base.BasePage;
 
@@ -17,10 +20,20 @@ public class CartPage extends BasePage {
         super(driver);
     }
 
-    public boolean verifyQtyAllOne() {
-        return driver.findElements(qty)
-                .stream().allMatch(e -> e.getText().equals("1"));
+    // ✅ FIX: Add this method
+    public boolean verifyQtyIsOne() {
+
+        List<WebElement> quantities = driver.findElements(qty);
+
+        for (WebElement q : quantities) {
+            if (!q.getText().equals("1")) {
+                return false;
+            }
+        }
+
+        return true;
     }
+
 
     public int getItemCount() {
         return driver.findElements(items).size();

@@ -1,45 +1,26 @@
 # QA Automation Assignment
 
-We have added two tests: the first task is API-Test.feature and the second is UI-Test.feature.
-- For the API-Test.feature, please visit https://reqres.in/. This should contain all the requirements.
-- UI-Test.feature please visit https://www.saucedemo.com/
+1. I1mplemented ThreadLocal WebDriver and removed shared user-data-dir. Each test now runs in an isolated browser instance, ensuring thread safety and stable parallel execution.
 
+2. Refactored config loading to use classpath (getResourceAsStream) and added support for environment variables, making it CI/CD compatible and environment-agnostic.
 
-Please DO use Page objects, make sure the code is reusable and feel free to improve the current code.
+3. Introduced DriverProvider interface and implemented a flexible driver factory supporting multiple browsers (Chrome, Firefox, Edge) without modifying existing code.
 
-**Note: We have intentionally added some bugs for you to debug.** 
+4. Moved API base URL to config.properties, enabling execution across different environments (dev/qa/prod) without code changes.
 
-Please contact the Mission Team if you have any questions.
+5. ensured all service classes encapsulate meaningful business logic, improving clarity and maintainability.
 
+6. Implemented interfaces like: DriverProvider,APIExecutor,ConfigProvider This ensures loose coupling and better extensibility.
 
-Good luck!
+7. Refactored to constructor-based dependency injection, ensuring components depend on abstractions rather than concrete classes.
 
-## Test Automation Framework
+8. Replaced with stable locators
 
-- This is a Maven based framework
-- `pom.xml` should have everything you need to create and run the tests. Please add further dependencies if you require it.
+9. Moved all business logic (totals, tax calculations) to the Service layer, keeping Page Objects strictly for UI interactions.
 
-The following folder `src/test/java/AutomationTest/mission` contains the following class:
+10. Refactored method to dynamically fetch all pages using total_pages, ensuring method behavior matches its name.
 
-- `Hook` - this is the before and after. This launches and kills the browser.
-- `RunnerTest` - contains the CucumberOptions which runs the BDD's
+11. Extended API client to support: GET,POST,PUT,DELETE
 
-The following folder `src/main/java/AutomationTest/mission` contains the following class:
-
-- `BrowserSetup` - This contains the setup of a given browser based on what is set to Browser property within `TestData.properties` 
-
- 
-## Steps to execute this project
-
-- Pre-requisites
-    - JAVA SDK 1.8 or higher
-    - Maven CLI
-    
-- Steps
-    - Clone the project to local
-    - Got o command line or any IDE that supports JAVA & Maven dependencies
-    - We may need to import the Maven dependencies (Scope got set to Compile for Newly added dependencies in pom.xml)
-    - Execute the command: `mvn clean test`
-    - Alternatively, we can run `testng.xml` from IDE after downloading the dependencies
-    - Result will be captured in `test-output` folder
-
+12. Improved User model
+13. Removed unused and duplicate code (e.g., redundant driver classes), ensuring a clean and maintainable codebase.

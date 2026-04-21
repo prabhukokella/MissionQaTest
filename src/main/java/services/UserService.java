@@ -1,105 +1,133 @@
 package services;
 
+import api.client.ApiClient;
 import api.endpoints.UserApi;
 import api.models.User;
+import core.interfaces.APIExecutor;
 import io.restassured.response.Response;
+import services.interfaces.UserServiceProvider;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
-public class UserService {
+public class UserService implements UserServiceProvider {
 
-    private UserApi api = new UserApi();
+    private final UserApi userApi;
+
     private Response response;
+    private List<Integer> userIds = new ArrayList<>();
+
+    // ✅ Inject dependency
+    public UserService() {
+        APIExecutor apiExecutor = new ApiClient();
+        this.userApi = new UserApi(apiExecutor);
+    }
 
     // ---------- LIST USERS ----------
+    @Override
     public void getFirstPageUsers() {
-        response = api.getUsers(1);
+        response = userApi.getUsers(1);
+        extractUserIds(response);
     }
 
+    @Override
     public void getAllUsers() {
-        response = api.getUsers(2);
-    }
 
+        userIds.clear();
+
+        int page = 1;
+        int totalPages;
+
+        do {
+            Response res = userApi.getUsers(page);
+
+            if (res.statusCode() != 200) {
+                throw new RuntimeException("API failed: " + res.asString());
+            }
+
+            extractUserIds(res);
+
+            totalPages = res.jsonPath().getInt("total_pages");
+
+            page++;
+
+        } while (page <= totalPages);
+    }
+    
+    @Override
     public int getTotalUsers() {
-
-        if (response == null) {
-            throw new RuntimeException("Response is null");
-        }
-
-        List<?> users = response.jsonPath().getList("data");
-
-        if (users == null) {
-            System.out.println("⚠️ Response body:");
-            System.out.println(response.asPrettyString());
-            throw new RuntimeException("Data is null in response");
-        }
-
-        return users.size();
+        return userIds.size();
     }
 
+    @Override
     public int getUniqueUserIdsCount() {
-
-        List<Integer> ids = response.jsonPath().getList("data.id");
-
-        if (ids == null) {
-            System.out.println("⚠️ Response body:");
-            System.out.println(response.asPrettyString());
-            throw new RuntimeException("IDs are null → check API response");
-        }
-
-        return new HashSet<>(ids).size();
+        return new HashSet<>(userIds).size();
     }
 
     // ---------- SINGLE USER ----------
+    @Override
     public void getUser(int id) {
-        response = api.getUser(id);
+        response = userApi.getUser(id);
     }
 
+    @Override
     public String getField(String key) {
         return response.jsonPath().getString("data." + key);
     }
 
+    // ---------- STATUS ----------
+    @Override
     public int getStatusCode() {
         return response.getStatusCode();
     }
 
     // ---------- CREATE USER ----------
+    @Override
     public void createUser(String name, String job) {
-        response = api.createUser(new User(name, job));
+        response = userApi.createUser(new User(name, job));
     }
 
+    @Override
     public String getResponseField(String key) {
         return response.jsonPath().getString(key);
     }
 
     // ---------- LOGIN ----------
+    @Override
     public void login(String email, String password) {
 
         Map<String, String> body = new HashMap<>();
         body.put("email", email);
+        body.put("password", password);
 
-        if (password != null && !password.isEmpty()) {
-            body.put("password", password);
-        }
-
-        response = api.login(body);
+        response = userApi.login(body);
     }
 
+    @Override
     public String getResponseBody() {
-        return response.getBody().asString();
+        return response.asString();
     }
 
     // ---------- DELAY ----------
+    @Override
     public void getDelayedUsers() {
-        response = api.delayedUsers();
+        response = userApi.delayedUsers();
+        extractUserIds(response);
     }
 
+    @Override
     public boolean areUserIdsUnique() {
-        List<Integer> ids = response.jsonPath().getList("data.id");
-        return ids.size() == new HashSet<>(ids).size();
+        return userIds.size() == new HashSet<>(userIds).size();
     }
+
+    // ---------- HELPER ----------
+    private void extractUserIds(Response res) {
+
+        List<Integer> ids = res.jsonPath().getList("data.id");
+
+        if (ids != null) {
+            userIds.addAll(ids);
+        }
+    }
+    
+    
 }

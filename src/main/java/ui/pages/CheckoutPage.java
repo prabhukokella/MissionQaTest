@@ -5,7 +5,8 @@ import org.openqa.selenium.WebDriver;
 
 import ui.base.BasePage;
 
-
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class CheckoutPage extends BasePage {
 
@@ -42,18 +43,19 @@ public class CheckoutPage extends BasePage {
         return this;
     }
 
-    public double calculateItemTotal() {
+    // ✅ ONLY RETURN DATA (NO CALCULATION)
+    public List<Double> getItemPrices() {
         return driver.findElements(prices)
                 .stream()
-                .mapToDouble(e -> Double.parseDouble(e.getText().replace("$", "")))
-                .sum();
+                .map(e -> Double.parseDouble(e.getText().replace("$", "")))
+                .collect(Collectors.toList());
     }
 
     public double getDisplayedTotal() {
         return Double.parseDouble(getText(total).replaceAll("[^0-9.]", ""));
     }
 
-    public double getTax() {
+    public double getDisplayedTax() {
         return Double.parseDouble(getText(tax).replaceAll("[^0-9.]", ""));
     }
 }

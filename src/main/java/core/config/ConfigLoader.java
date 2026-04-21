@@ -1,30 +1,38 @@
 package core.config;
 
+import core.interfaces.ConfigProvider;
+
+import java.io.InputStream;
 import java.util.Properties;
-import java.io.FileInputStream;
 
+public class ConfigLoader implements ConfigProvider {
 
-
-public class ConfigLoader {
-
-    private static Properties prop;
+    private static final Properties prop = new Properties();
 
     static {
-        try {
-            String env = System.getProperty("env", "qa");
+        try (InputStream is = ConfigLoader.class
+                .getClassLoader()
+                .getResourceAsStream("config.properties")) {
 
-            prop = new Properties();
-            prop.load(new FileInputStream(
-                "src/test/resources/config/" + env + ".properties"
-            ));
+            if (is == null) {
+                throw new RuntimeException("config.properties not found");
+            }
+
+            prop.load(is);
 
         } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("Failed to load config file");
+            throw new RuntimeException("Config load failed", e);
         }
     }
 
+    // ✅ STATIC (used everywhere)
     public static String get(String key) {
+        return prop.getProperty(key);
+    }
+
+    // ✅ Interface method
+    @Override
+    public String getValue(String key) {
         return prop.getProperty(key);
     }
 }

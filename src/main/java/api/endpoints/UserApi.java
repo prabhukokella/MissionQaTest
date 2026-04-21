@@ -2,28 +2,39 @@ package api.endpoints;
 
 import api.client.ApiClient;
 import io.restassured.response.Response;
+import core.interfaces.APIExecutor;
 
 public class UserApi {
 
-    private static final String BASE = "https://reqres.in/api";
+    private final APIExecutor apiClient;
 
+    // ✅ Constructor Injection
+    public UserApi(APIExecutor apiClient) {
+        this.apiClient = apiClient;
+    }
+
+    // ---------- GET USERS ----------
     public Response getUsers(int page) {
-        return ApiClient.get("https://reqres.in/api/users?page=" + page);
+        return apiClient.get("/users?page=" + page);
     }
 
+    // ---------- GET SINGLE USER ----------
     public Response getUser(int id) {
-        return ApiClient.get(BASE + "/users/" + id);
+        return apiClient.get("/users/" + id);
     }
 
+    // ---------- CREATE USER ----------
     public Response createUser(Object body) {
-        return ApiClient.post(BASE + "/users", body);
+        return apiClient.post("/users", body);
     }
 
+    // ---------- LOGIN ----------
     public Response login(Object body) {
-        return ApiClient.post(BASE + "/login", body);
+        return apiClient.post("/login", body);
     }
 
+    // ---------- DELAY USERS ----------
     public Response delayedUsers() {
-        return ApiClient.get(BASE + "/users?delay=3");
+        return apiClient.get("/users?delay=3");
     }
 }

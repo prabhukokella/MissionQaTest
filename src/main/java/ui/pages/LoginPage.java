@@ -17,8 +17,14 @@ public class LoginPage extends BasePage {
     }
 
     public LoginPage open(){
-        driver.get(ConfigLoader.get("baseUrl"));
-        return this;
+    	String url = ConfigLoader.get("base.url");
+
+    	if (url == null) {
+    	    throw new RuntimeException("base.url is missing in config.properties");
+    	}
+
+    	driver.get(url);
+		return null;
     }
 
     public ProductsPage login(String u,String p){

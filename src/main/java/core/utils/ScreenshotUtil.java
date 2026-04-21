@@ -2,7 +2,9 @@ package core.utils;
 
 import java.io.File;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.TakesScreenshot;
@@ -12,19 +14,17 @@ import core.driver.DriverFactory;
 
 public class ScreenshotUtil {
 
-    public static void capture(String name) {
-
+    public static void capture(WebDriver driver, String scenarioName) {
         try {
-            WebDriver driver = DriverFactory.get();
+            Path path = Paths.get("target/screenshots/" + scenarioName + "_" + System.currentTimeMillis() + ".png");
 
-            File src = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
+            Files.createDirectories(path.getParent());
 
-            String path = "target/screenshots/" + name.replaceAll(" ", "_") + ".png";
-
-            Files.createDirectories(Paths.get("target/screenshots"));
-            Files.copy(src.toPath(), Paths.get(path));
-
-            System.out.println("Screenshot saved: " + path);
+            Files.copy(
+                    ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE).toPath(),
+                    path,
+                    StandardCopyOption.REPLACE_EXISTING
+            );
 
         } catch (Exception e) {
             e.printStackTrace();

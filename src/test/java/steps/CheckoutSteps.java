@@ -6,20 +6,27 @@ import org.openqa.selenium.WebDriver;
 import org.testng.Assert;
 
 import core.driver.DriverFactory;
+import core.interfaces.DriverProvider;
+
 import io.cucumber.datatable.DataTable;
-import io.cucumber.java.en.Given;
-import io.cucumber.java.en.Then;
-import io.cucumber.java.en.When;
+import io.cucumber.java.en.*;
+
 import services.CheckoutService;
 
 public class CheckoutSteps {
 
-    WebDriver driver;
-    CheckoutService service;
+    private WebDriver driver;
+    private CheckoutService service;
+
+    // ✅ Depend on abstraction
+    private DriverProvider driverProvider = new DriverFactory();
 
     @Given("I am on the home page")
     public void openHome() {
-        driver = DriverFactory.get();
+
+        // ✅ Driver already initialized in Hooks
+        driver = driverProvider.get();
+
         service = new CheckoutService(driver);
         service.openHome();
     }
@@ -75,14 +82,10 @@ public class CheckoutSteps {
         service.typeLast(l);
     }
 
-    
-   // @Given("I type {string} for ZIP/Postal Code")
     @Given("I type {string} for ZIP\\/Postal Code")
     public void enterZip(String zip) {
         service.typeZip(zip);
     }
-    
-    
 
     @When("I click on the CONTINUE button")
     public void cont() {
@@ -99,4 +102,6 @@ public class CheckoutSteps {
         double total = service.getActualTotal();
         Assert.assertEquals(service.getTax(), total * percent / 100, 0.01);
     }
+
+    // ❌ Removed driver quit (handled in Hooks)
 }
